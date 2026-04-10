@@ -6,6 +6,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraft.network.chat.Component;
 
 @OnlyIn(Dist.CLIENT)
 @Mod.EventBusSubscriber(modid = CipolloTiers.MOD_ID, value = Dist.CLIENT)
@@ -31,5 +32,16 @@ public class ClientTierHandler {
                 Thread.currentThread().interrupt();
             }
         }).start();
+    }
+
+    @SubscribeEvent
+    public static void onRenderNameTag(net.minecraftforge.client.event.RenderNameTagEvent event) {
+        if (!(event.getEntity() instanceof net.minecraft.world.entity.player.Player player)) return;
+
+        PlayerTierData data = TierEventHandler.getPlayerData(player.getUUID());
+        if (data == null) return;
+
+        Component newName = Component.literal(data.getPrefix() + " " + player.getName().getString());
+        event.setContent(newName);
     }
 }

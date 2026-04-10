@@ -53,6 +53,15 @@ public class TierCommand {
                                         ))
                                 )
                         )
+
+                        .then(Commands.literal("reset")
+                                .then(Commands.argument("jugador", EntityArgument.player())
+                                        .executes(ctx -> reset(
+                                                ctx.getSource(),
+                                                EntityArgument.getPlayer(ctx, "jugador")
+                                        ))
+                                )
+                        )
         );
 
         // Comando interno para la GUI (sin restricción de permisos): /tierself
@@ -189,5 +198,29 @@ public class TierCommand {
         } catch (Exception e) {
             return 0;
         }
+    }
+
+    // ── /tier reset ───────────────────────────────────────────────────────────
+
+    private static int reset(CommandSourceStack source, ServerPlayer target) {
+        PlayerTierData data = TierEventHandler.getPlayerData(target.getUUID());
+
+        if (data == null) {
+            source.sendFailure(Component.literal("No se encontraron datos para " + target.getName().getString()));
+            return 0;
+        }
+
+        data.resetTiers();
+        TierEventHandler.savePlayerData(target);
+
+        source.sendSuccess(() -> Component.literal(
+                "§aTiers de " + target.getName().getString() + " reiniciados. Verá la GUI al reconectarse."
+        ), true);
+
+        target.sendSystemMessage(Component.literal(
+                "§eTus tiers han sido reiniciados. Por favor reconéctate para elegirlos de nuevo."
+        ));
+
+        return 1;
     }
 }

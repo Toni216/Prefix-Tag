@@ -52,4 +52,9 @@ public class PlayerTierData {
         data.pvpTier = tag.getInt("PvpTier");
         return data;
     }
+
+    public void resetTiers() {
+        this.rolTier = -1;
+        this.pvpTier = -1;
+    }
 }
