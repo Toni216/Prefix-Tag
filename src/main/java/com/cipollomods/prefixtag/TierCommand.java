@@ -1,4 +1,4 @@
-package com.cipollomods.cipollotiers;
+package com.cipollomods.prefixtag;
 
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import net.minecraft.commands.CommandSourceStack;
@@ -10,13 +10,31 @@ import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-@Mod.EventBusSubscriber(modid = CipolloTiers.MOD_ID)
+/**
+ * TierCommand
+ *
+ * Registra y gestiona todos los comandos del mod.
+ * Hay dos grupos de comandos:
+ *
+ *   /tier — Comandos de administrador (requieren op level 2)
+ *     setrol <jugador> <1-5> → Asigna el tier de Rol a un jugador
+ *     setpvp <jugador> <1-5> → Asigna el tier de PvP a un jugador
+ *     check  <jugador>       → Muestra el prefijo actual de un jugador
+ *     reset  <jugador>       → Reinicia los tiers, verá la GUI al reconectarse
+ *
+ *   /tierself — Comando interno usado exclusivamente por la GUI
+ *     rol <1-5> → El jugador asigna su propio tier de Rol (solo si no tiene uno)
+ *     pvp <1-5> → El jugador asigna su propio tier de PvP (solo si no tiene uno)
+ */
+
+@Mod.EventBusSubscriber(modid = PrefixTag.MOD_ID)
 public class TierCommand {
 
     @SubscribeEvent
     public static void onRegisterCommands(RegisterCommandsEvent event) {
 
-        // Comandos de admin: /tier
+        // ─ Comandos de admin: /tier ---------------------------------------
+        // Requieren op level 2 — jugadores normales no pueden usarlos
         event.getDispatcher().register(
                 Commands.literal("tier")
                         .requires(source -> source.hasPermission(2))
@@ -64,7 +82,9 @@ public class TierCommand {
                         )
         );
 
-        // Comando interno para la GUI (sin restricción de permisos): /tierself
+        // ── Comando interno para la GUI: /tierself ------------------------------------------
+        // Sin restricción de permisos — cualquier jugador puede ejecutarlo
+        // pero los métodos comprueban internamente que el tier no esté ya asignado
         event.getDispatcher().register(
                 Commands.literal("tierself")
 
@@ -88,8 +108,13 @@ public class TierCommand {
         );
     }
 
-    // ── /tier setrol ──────────────────────────────────────────────────────────
+    // ─ /tier setrol ----------------------------------------------------------
 
+    /**
+     * Asigna el tier de Rol a un jugador concreto.
+     * Puede sobreescribir un tier existente — es un comando de admin.
+     * Notifica tanto al admin que ejecuta el comando como al jugador afectado.
+     */
     private static int setRol(CommandSourceStack source, ServerPlayer target, int tier) {
         PlayerTierData data = TierEventHandler.getPlayerData(target.getUUID());
 
@@ -112,8 +137,13 @@ public class TierCommand {
         return 1;
     }
 
-    // ── /tier setpvp ──────────────────────────────────────────────────────────
+    // ─ /tier setpvp ----------------------------------------------------------
 
+    /**
+     * Asigna el tier de PvP a un jugador concreto.
+     * Puede sobreescribir un tier existente — es un comando de admin.
+     * Notifica tanto al admin que ejecuta el comando como al jugador afectado.
+     */
     private static int setPvp(CommandSourceStack source, ServerPlayer target, int tier) {
         PlayerTierData data = TierEventHandler.getPlayerData(target.getUUID());
 
@@ -136,8 +166,11 @@ public class TierCommand {
         return 1;
     }
 
-    // ── /tier check ───────────────────────────────────────────────────────────
-
+    // ─ /tier check ----------------------------------------------------------
+    /**
+     * Muestra el prefijo actual de un jugador al admin que ejecuta el comando.
+     * No notifica al jugador afectado.
+     */
     private static int check(CommandSourceStack source, ServerPlayer target) {
         PlayerTierData data = TierEventHandler.getPlayerData(target.getUUID());
 
@@ -152,8 +185,14 @@ public class TierCommand {
 
         return 1;
     }
-    // ── /cipollotiers setself rol ─────────────────────────────────────────────
 
+    // ─ /tierself rol ----------------------------------------------------------
+    /**
+     * Permite al jugador asignarse su propio tier de Rol.
+     * Solo funciona si el jugador aún no tiene un tier de Rol asignado.
+     * Este comando lo ejecuta la GUI automáticamente — no está pensado
+     * para ser usado manualmente por los jugadores.
+     */
     private static int setSelfRol(CommandSourceStack source, int tier) {
         try {
             ServerPlayer player = source.getPlayerOrException();
@@ -176,8 +215,13 @@ public class TierCommand {
         }
     }
 
-// ── /cipollotiers setself pvp ─────────────────────────────────────────────
-
+    // ─ /tierself pvp ---------------------------------------------------
+    /**
+     * Permite al jugador asignarse su propio tier de PvP.
+     * Solo funciona si el jugador aún no tiene un tier de PvP asignado.
+     * Este comando lo ejecuta la GUI automáticamente — no está pensado
+     * para ser usado manualmente por los jugadores.
+     */
     private static int setSelfPvp(CommandSourceStack source, int tier) {
         try {
             ServerPlayer player = source.getPlayerOrException();
@@ -200,8 +244,12 @@ public class TierCommand {
         }
     }
 
-    // ── /tier reset ───────────────────────────────────────────────────────────
-
+    // ── /tier reset ----------------------------------------------------------
+    /**
+     * Reinicia ambos tiers de un jugador a -1 (sin asignar).
+     * La próxima vez que el jugador entre al servidor verá la GUI de selección.
+     * Notifica tanto al admin como al jugador afectado.
+     */
     private static int reset(CommandSourceStack source, ServerPlayer target) {
         PlayerTierData data = TierEventHandler.getPlayerData(target.getUUID());
 
