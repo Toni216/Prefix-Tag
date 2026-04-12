@@ -91,4 +91,4 @@ When a player joins for the first time, a selection screen appears asking them t
 
 ## License
 
-This mod is part of the **Toni's Mods** project and is intended for use on CipolloLand.
+This mod is part of the **Toni's Mods** project and is intended for use on CipolloLand. MIT License
