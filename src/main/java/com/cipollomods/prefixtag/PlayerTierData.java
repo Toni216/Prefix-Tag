@@ -15,6 +15,9 @@ public class PlayerTierData {
     private int rolTier = -1;
     private int pvpTier = -1;
 
+    // Color del nombre en el chat y nametag. "white" por defecto.
+    private String nameColor = "white";
+
     // ─ Getters -------------------------------------------------------
 
     /** Devuelve el tier de Rol actual. -1 si no está asignado. */
@@ -29,11 +32,21 @@ public class PlayerTierData {
     /** Devuelve true si el jugador tiene un tier de PvP asignado. */
     public boolean hasPvpTier() { return pvpTier != -1; }
 
+    /** Devuelve el color del nombre del jugador. */
+    public String getNameColor() { return nameColor; }
+
     /**
      * Devuelve true si el jugador tiene ambos tiers asignados.
      * Se usa para decidir si hay que mostrar la GUI de selección.
      */
     public boolean isFullyAssigned() { return hasRolTier() && hasPvpTier(); }
+
+    /**
+     * Devuelve el código de color de Minecraft para el nombre del jugador.
+     */
+    public String getColorCode() {
+        return PrefixTagConfig.colorNameToCode(nameColor);
+    }
 
     // ─ Setters ------------------------------------------------------
 
@@ -56,17 +69,29 @@ public class PlayerTierData {
         this.pvpTier = tier;
     }
 
+    /**
+     * Asigna el color del nombre del jugador.
+     * @param color Nombre del color (ej. "gold", "red")
+     */
+    public void setNameColor(String color) { this.nameColor = color; }
+
     // ─ Prefijo -----------------------------------------------------------------
 
     /**
      * Genera el prefijo combinado para mostrar en chat y nametag.
      * Ejemplo: [R2|P3]
+     * Cada etiqueta de tier tiene su propio color según el número de tier.
+     * Los corchetes y el separador son blancos para evitar conflictos con otros mods.
      * Si algún tier no está asignado, muestra ? en su lugar: [R?|P?]
      */
     public String getPrefix() {
-        String rol = hasRolTier() ? "R" + rolTier : "R?";
-        String pvp = hasPvpTier() ? "P" + pvpTier : "P?";
-        return "[" + rol + "|" + pvp + "]";
+        String rolLabel = hasRolTier() ? PrefixTagConfig.getRolLabel(rolTier) : "R?";
+        String pvpLabel = hasPvpTier() ? PrefixTagConfig.getPvpLabel(pvpTier) : "P?";
+
+        String rolColor = hasRolTier() ? PrefixTagConfig.getTierColor(rolTier) : "§f";
+        String pvpColor = hasPvpTier() ? PrefixTagConfig.getTierColor(pvpTier) : "§f";
+
+        return "§f[" + rolColor + rolLabel + "§f|" + pvpColor + pvpLabel + "§f]§r";
     }
 
     // ─ NBT (guardar y cargar) --------------------------------------------------
@@ -79,9 +104,9 @@ public class PlayerTierData {
         CompoundTag tag = new CompoundTag();
         tag.putInt("RolTier", rolTier);
         tag.putInt("PvpTier", pvpTier);
+        tag.putString("NameColor", nameColor);
         return tag;
     }
-
     /**
      * Deserializa los datos desde un CompoundTag NBT.
      * Se llama al cargar los datos cuando el jugador entra al servidor.
@@ -91,6 +116,7 @@ public class PlayerTierData {
         PlayerTierData data = new PlayerTierData();
         data.rolTier = tag.getInt("RolTier");
         data.pvpTier = tag.getInt("PvpTier");
+        data.nameColor = tag.contains("NameColor") ? tag.getString("NameColor") : "white";
         return data;
     }
 

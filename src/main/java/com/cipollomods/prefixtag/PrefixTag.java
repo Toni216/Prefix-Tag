@@ -4,6 +4,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.ModLoadingContext;
 
 /**
  * PrefixTag
@@ -30,7 +31,13 @@ public class PrefixTag {
     public static final String MOD_ID = "prefixtag";
 
     public PrefixTag() {
-        // Registrar el setup del cliente para conectar el evento de login de la GUI
+        // Registrar la configuración del servidor
+        ModLoadingContext.get().registerConfig(
+                net.minecraftforge.fml.config.ModConfig.Type.COMMON,
+                PrefixTagConfig.SPEC,
+                "prefixtag.toml"
+        );
+
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onClientSetup);
         MinecraftForge.EVENT_BUS.register(this);
     }

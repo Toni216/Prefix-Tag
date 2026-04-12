@@ -7,6 +7,7 @@ import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraft.network.chat.Component;
+import net.minecraftforge.client.event.RenderNameTagEvent;
 
 /**
  * ClientTierHandler
@@ -65,13 +66,15 @@ public class ClientTierHandler {
      */
 
     @SubscribeEvent
-    public static void onRenderNameTag(net.minecraftforge.client.event.RenderNameTagEvent event) {
+    public static void onRenderNameTag(RenderNameTagEvent event) {
         if (!(event.getEntity() instanceof net.minecraft.world.entity.player.Player player)) return;
 
         PlayerTierData data = TierEventHandler.getPlayerData(player.getUUID());
         if (data == null) return;
 
-        Component newName = Component.literal(data.getPrefix() + " " + player.getName().getString());
+        Component newName = Component.literal(
+                data.getPrefix() + " " + data.getColorCode() + player.getName().getString() + "§r"
+        );
         event.setContent(newName);
     }
 }

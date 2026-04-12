@@ -7,8 +7,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 
 /**
- * TierSelectionScreen
- *
  * Pantalla de selección de tier que se muestra al jugador
  * cuando entra al servidor por primera vez o tras un reset.
  *
@@ -30,13 +28,6 @@ public class TierSelectionScreen extends Screen {
     public enum Mode { ROL, PVP }
     private final Mode mode;
 
-    // ─ Textos -------------------------------------------
-
-    private static final String ROL_TITLE = "Selecciona tu rango de Rol";
-    private static final String PVP_TITLE = "Selecciona tu rango de PvP";
-    private static final String ROL_DESC  = "Elige el rango de rol que desees tener, puedes leerlo en el canal de discord dispuesto para ello";
-    private static final String PVP_DESC  = "Elige el rango de PvP que desees tener, puedes leerlo en el canal de discord dispuesto para ello";
-
     // ─ Colores -----------------------------------------
 
     /** Color del título en formato ARGB hexadecimal */
@@ -51,8 +42,30 @@ public class TierSelectionScreen extends Screen {
      * @param mode ROL para la pantalla de Rol, PVP para la de PvP
      */
     public TierSelectionScreen(Mode mode) {
-        super(Component.literal(mode == Mode.ROL ? ROL_TITLE : PVP_TITLE));
+        super(Component.literal(mode == Mode.ROL
+                ? PrefixTagConfig.ROL_GUI_TITLE.get()
+                : PrefixTagConfig.PVP_GUI_TITLE.get()));
         this.mode = mode;
+    }
+
+    // ─ Métodos de texto desde config ──────────────────────────────────────────
+
+    /**
+     * Devuelve el título correspondiente al modo actual desde la config.
+     */
+    public String getRolOrPvpTitle() {
+        return mode == Mode.ROL
+                ? PrefixTagConfig.ROL_GUI_TITLE.get()
+                : PrefixTagConfig.PVP_GUI_TITLE.get();
+    }
+
+    /**
+     * Devuelve la descripción correspondiente al modo actual desde la config.
+     */
+    public String getRolOrPvpDesc() {
+        return mode == Mode.ROL
+                ? PrefixTagConfig.ROL_GUI_DESC.get()
+                : PrefixTagConfig.PVP_GUI_DESC.get();
     }
 
     // ─ Comportamiento de la pantalla -------------------------------------------
@@ -88,15 +101,18 @@ public class TierSelectionScreen extends Screen {
         int total   = 5 * btnW + 4 * gap; // Ancho total de los 5 botones + huecos
         int startX  = centerX - total / 2; // X de inicio para centrar el conjunto
 
-        // Prefijo del botón según el modo: "R" para Rol, "P" para PvP
-        String prefix = mode == Mode.ROL ? "R" : "P";
-
+        // Prefijo del botón según el modo: etiqueta de config para cada tier
         for (int i = 1; i <= 5; i++) {
             final int tier = i;
             int x = startX + (i - 1) * (btnW + gap);
 
+            // Etiqueta del botón viene de la config (ej. "R1" o lo que configure el admin)
+            String label = mode == Mode.ROL
+                    ? PrefixTagConfig.getRolLabel(tier)
+                    : PrefixTagConfig.getPvpLabel(tier);
+
             this.addRenderableWidget(Button.builder(
-                    Component.literal(prefix + tier),
+                    Component.literal(label),
                     btn -> onTierSelected(tier)
             ).pos(x, startY).size(btnW, btnH).build());
         }
@@ -113,8 +129,9 @@ public class TierSelectionScreen extends Screen {
         this.renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
 
-        String title = mode == Mode.ROL ? ROL_TITLE : PVP_TITLE;
-        String desc  = mode == Mode.ROL ? ROL_DESC  : PVP_DESC;
+        // Título y descripción vienen de la config
+        String title = getRolOrPvpTitle();
+        String desc  = getRolOrPvpDesc();
 
         // Título centrado en dorado
         graphics.drawCenteredString(this.font, title, this.width / 2, this.height / 2 - 50, COLOR_TITLE);

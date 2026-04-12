@@ -9,6 +9,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import com.mojang.brigadier.arguments.StringArgumentType;
 
 /**
  * TierCommand
@@ -80,6 +81,18 @@ public class TierCommand {
                                         ))
                                 )
                         )
+                        .then(Commands.literal("setcolor")
+                                .then(Commands.argument("jugador", EntityArgument.player())
+                                        .then(Commands.argument("color", StringArgumentType.string())
+                                                .executes(ctx -> setColor(
+                                                        ctx.getSource(),
+                                                        EntityArgument.getPlayer(ctx, "jugador"),
+                                                        StringArgumentType.getString(ctx, "color")
+                                                ))
+                                        )
+                                )
+                        )
+
         );
 
         // ── Comando interno para la GUI: /tierself ------------------------------------------
@@ -267,6 +280,43 @@ public class TierCommand {
 
         target.sendSystemMessage(Component.literal(
                 "§eTus tiers han sido reiniciados. Por favor reconéctate para elegirlos de nuevo."
+        ));
+
+        return 1;
+    }
+
+    // ── /tier setcolor ────────────────────────────────────────────────────────
+
+    /**
+     * Asigna el color del nombre a un jugador concreto.
+     * Solo afecta al nombre, no al prefijo.
+     * Colores disponibles: black, dark_blue, dark_green, dark_aqua, dark_red,
+     * dark_purple, gold, gray, dark_gray, blue, green, aqua, red, light_purple, yellow, white
+     */
+    private static int setColor(CommandSourceStack source, ServerPlayer target, String color) {
+        PlayerTierData data = TierEventHandler.getPlayerData(target.getUUID());
+
+        if (data == null) {
+            source.sendFailure(Component.literal("No se encontraron datos para " + target.getName().getString()));
+            return 0;
+        }
+
+        // Verificar que el color es válido
+        String colorCode = PrefixTagConfig.colorNameToCode(color);
+        if (colorCode.equals("§f") && !color.equalsIgnoreCase("white")) {
+            source.sendFailure(Component.literal("§cColor no reconocido: " + color));
+            return 0;
+        }
+
+        data.setNameColor(color);
+        TierEventHandler.savePlayerData(target);
+
+        source.sendSuccess(() -> Component.literal(
+                "§aColor de nombre de " + target.getName().getString() + " establecido a " + colorCode + color
+        ), true);
+
+        target.sendSystemMessage(Component.literal(
+                "§eTu color de nombre ha sido actualizado a " + colorCode + color
         ));
 
         return 1;

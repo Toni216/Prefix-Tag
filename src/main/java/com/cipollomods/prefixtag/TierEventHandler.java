@@ -94,7 +94,9 @@ public class TierEventHandler {
 
         if (data != null) {
             String prefix = data.getPrefix();
-            Component newMessage = Component.literal(prefix + " " + player.getName().getString() + ": " + event.getRawText());
+            Component newMessage = Component.literal(
+                    prefix + " " + data.getColorCode() + player.getName().getString() + "§r: " + event.getRawText()
+            );
             event.setMessage(newMessage);
         }
     }
