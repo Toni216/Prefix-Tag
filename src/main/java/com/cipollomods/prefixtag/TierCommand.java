@@ -10,6 +10,7 @@ import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.arguments.BoolArgumentType;
 
 /**
  * TierCommand
@@ -39,6 +40,18 @@ public class TierCommand {
         event.getDispatcher().register(
                 Commands.literal("tier")
                         .requires(source -> source.hasPermission(2))
+
+                        .then(Commands.literal("online")
+                                .then(Commands.argument("jugador", EntityArgument.player())
+                                        .then(Commands.argument("valor", BoolArgumentType.bool())
+                                                .executes(ctx -> setOnline(
+                                                        ctx.getSource(),
+                                                        EntityArgument.getPlayer(ctx, "jugador"),
+                                                        BoolArgumentType.getBool(ctx, "valor")
+                                                ))
+                                        )
+                                )
+                        )
 
                         .then(Commands.literal("setrol")
                                 .then(Commands.argument("jugador", EntityArgument.player())
@@ -318,6 +331,27 @@ public class TierCommand {
         target.sendSystemMessage(Component.literal(
                 "§eTu color de nombre ha sido actualizado a " + colorCode + color
         ));
+
+        return 1;
+    }
+
+    /**
+     * Asigna modo OnRol
+     */
+    private static int setOnline(CommandSourceStack source, ServerPlayer target, boolean value) {
+        PlayerTierData data = TierEventHandler.getPlayerData(target.getUUID());
+
+        if (data == null) {
+            source.sendFailure(Component.literal("No se encontraron datos para " + target.getName().getString()));
+            return 0;
+        }
+
+        data.setShowOnline(value);
+        TierEventHandler.savePlayerData(target);
+
+        source.sendSuccess(() -> Component.literal(
+                "§aIndicador online de " + target.getName().getString() + " " + (value ? "§aactivado" : "§cdesactivado")
+        ), true);
 
         return 1;
     }

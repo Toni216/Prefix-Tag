@@ -35,6 +35,19 @@ public class PlayerTierData {
     /** Devuelve el color del nombre del jugador. */
     public String getNameColor() { return nameColor; }
 
+    // Campo nuevo (por defecto desactivado)
+    private boolean showOnline = false;
+
+    // Getter
+    public boolean isShowOnline() {
+        return showOnline;
+    }
+
+    // Setter
+    public void setShowOnline(boolean showOnline) {
+        this.showOnline = showOnline;
+    }
+
     /**
      * Devuelve true si el jugador tiene ambos tiers asignados.
      * Se usa para decidir si hay que mostrar la GUI de selección.
@@ -73,7 +86,9 @@ public class PlayerTierData {
      * Asigna el color del nombre del jugador.
      * @param color Nombre del color (ej. "gold", "red")
      */
-    public void setNameColor(String color) { this.nameColor = color; }
+    public void setNameColor(String color) {
+        this.nameColor = color;
+    }
 
     // ─ Prefijo -----------------------------------------------------------------
 
@@ -90,8 +105,9 @@ public class PlayerTierData {
 
         String rolColor = hasRolTier() ? PrefixTagConfig.getTierColor(rolTier) : "§f";
         String pvpColor = hasPvpTier() ? PrefixTagConfig.getTierColor(pvpTier) : "§f";
+        String onlineCircle = showOnline ? "§a● §r" : "";
 
-        return "§f[" + rolColor + rolLabel + "§f|" + pvpColor + pvpLabel + "§f]§r";
+        return onlineCircle + "§f[" + rolColor + rolLabel + "§f|" + pvpColor + pvpLabel + "§f]§r";
     }
 
     // ─ NBT (guardar y cargar) --------------------------------------------------
@@ -105,6 +121,7 @@ public class PlayerTierData {
         tag.putInt("RolTier", rolTier);
         tag.putInt("PvpTier", pvpTier);
         tag.putString("NameColor", nameColor);
+        tag.putBoolean("ShowOnline", showOnline);
         return tag;
     }
     /**
@@ -117,6 +134,8 @@ public class PlayerTierData {
         data.rolTier = tag.getInt("RolTier");
         data.pvpTier = tag.getInt("PvpTier");
         data.nameColor = tag.contains("NameColor") ? tag.getString("NameColor") : "white";
+        data.showOnline = tag.contains("ShowOnline") && tag.getBoolean("ShowOnline");
+
         return data;
     }
 
