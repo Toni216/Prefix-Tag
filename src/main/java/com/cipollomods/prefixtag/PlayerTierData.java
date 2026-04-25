@@ -1,120 +1,115 @@
 package com.cipollomods.prefixtag;
 
 import net.minecraft.nbt.CompoundTag;
+
 /**
- * Almacena los datos de tier de un jugador individual.
- * Cada jugador tiene dos tiers independientes:
- *   - Rol (R1–R5): elegido por el jugador al entrar por primera vez
- *   - PvP (P1–P5): elegido por el jugador al entrar por primera vez
+ * Modelo de datos de tier para un jugador individual.
+ * Almacena y serializa en NBT todos los datos que el mod necesita
+ * persistir entre sesiones para cada jugador.
  *
- * Un valor de -1 indica que el tier aún no ha sido asignado.
+ * Campos persistidos:
+ *   - rolTier      > tier de Rol elegido (1–5), o -1 si no está asignado
+ *   - pvpTier      > tier de PvP elegido (1–5), o -1 si no está asignado
+ *   - nameColor    > nombre del color del jugador en chat y nametag
+ *   - showOnline   > si es true, muestra un círculo verde (§a●) antes del prefijo
+ *
+ * El ciclo de vida de esta clase lo gestiona {@link TierEventHandler}:
+ * se crea o carga al hacer login y se guarda al hacer logout.
  */
 public class PlayerTierData {
 
-    // -1 = sin asignar. Los tiers válidos van de 1 a 5.
-    private int rolTier = -1;
-    private int pvpTier = -1;
+    // -1 = sin asignar. Tiers válidos: 1–5.
+    private int rolTier   = -1;
+    private int pvpTier   = -1;
 
-    // Color del nombre en el chat y nametag. "white" por defecto.
     private String nameColor = "white";
 
-    // ─ Getters -------------------------------------------------------
-
-    /** Devuelve el tier de Rol actual. -1 si no está asignado. */
-    public int getRolTier() { return rolTier; }
-
-    /** Devuelve el tier de PvP actual. -1 si no está asignado. */
-    public int getPvpTier() { return pvpTier; }
-
-    /** Devuelve true si el jugador tiene un tier de Rol asignado. */
-    public boolean hasRolTier() { return rolTier != -1; }
-
-    /** Devuelve true si el jugador tiene un tier de PvP asignado. */
-    public boolean hasPvpTier() { return pvpTier != -1; }
-
-    /** Devuelve el color del nombre del jugador. */
-    public String getNameColor() { return nameColor; }
-
-    // Campo nuevo (por defecto desactivado)
+    // Si es true, se antepone "§a● " al prefijo en chat y nametag.
+    // Se gestiona con /tier online <jugador> <true|false>.
     private boolean showOnline = false;
 
-    // Getter
-    public boolean isShowOnline() {
-        return showOnline;
-    }
+    public int getRolTier() { return rolTier; }
 
-    // Setter
-    public void setShowOnline(boolean showOnline) {
-        this.showOnline = showOnline;
-    }
+    public int getPvpTier() { return pvpTier; }
 
-    /**
-     * Devuelve true si el jugador tiene ambos tiers asignados.
-     * Se usa para decidir si hay que mostrar la GUI de selección.
-     */
+    public boolean hasRolTier() { return rolTier != -1; }
+
+    public boolean hasPvpTier() { return pvpTier != -1; }
+
     public boolean isFullyAssigned() { return hasRolTier() && hasPvpTier(); }
 
-    /**
-     * Devuelve el código de color de Minecraft para el nombre del jugador.
-     */
+    public String getNameColor() { return nameColor; }
+
+    public boolean isShowOnline() { return showOnline; }
+
     public String getColorCode() {
         return PrefixTagConfig.colorNameToCode(nameColor);
     }
 
-    // ─ Setters ------------------------------------------------------
-
     /**
      * Asigna el tier de Rol del jugador.
+     *
      * @param tier Valor entre 1 y 5 (ambos inclusive)
      * @throws IllegalArgumentException si el valor está fuera de rango
      */
     public void setRolTier(int tier) {
-        if (tier < 1 || tier > 5) throw new IllegalArgumentException("Rol tier debe ser entre 1 y 5");
+        if (tier < 1 || tier > 5) throw new IllegalArgumentException("Rol tier debe estar entre 1 y 5, recibido: " + tier);
         this.rolTier = tier;
     }
+
     /**
      * Asigna el tier de PvP del jugador.
+     *
      * @param tier Valor entre 1 y 5 (ambos inclusive)
      * @throws IllegalArgumentException si el valor está fuera de rango
      */
     public void setPvpTier(int tier) {
-        if (tier < 1 || tier > 5) throw new IllegalArgumentException("PvP tier debe ser entre 1 y 5");
+        if (tier < 1 || tier > 5) throw new IllegalArgumentException("PvP tier debe estar entre 1 y 5, recibido: " + tier);
         this.pvpTier = tier;
     }
 
     /**
      * Asigna el color del nombre del jugador.
-     * @param color Nombre del color (ej. "gold", "red")
+     *
+     * @param color Nombre del color (ej. "gold", "red"). Ver {@link PrefixTagConfig#colorNameToCode}.
      */
     public void setNameColor(String color) {
         this.nameColor = color;
     }
 
-    // ─ Prefijo -----------------------------------------------------------------
-
     /**
-     * Genera el prefijo combinado para mostrar en chat y nametag.
-     * Ejemplo: [R2|P3]
-     * Cada etiqueta de tier tiene su propio color según el número de tier.
-     * Los corchetes y el separador son blancos para evitar conflictos con otros mods.
-     * Si algún tier no está asignado, muestra ? en su lugar: [R?|P?]
+     * Activa o desactiva el indicador de conexión (§a●) en el prefijo.
+     *
+     * @param showOnline true para activarlo, false para desactivarlo
      */
-    public String getPrefix() {
-        String rolLabel = hasRolTier() ? PrefixTagConfig.getRolLabel(rolTier) : "R?";
-        String pvpLabel = hasPvpTier() ? PrefixTagConfig.getPvpLabel(pvpTier) : "P?";
-
-        String rolColor = hasRolTier() ? PrefixTagConfig.getTierColor(rolTier) : "§f";
-        String pvpColor = hasPvpTier() ? PrefixTagConfig.getTierColor(pvpTier) : "§f";
-        String onlineCircle = showOnline ? "§a● §r" : "";
-
-        return onlineCircle + "§f[" + rolColor + rolLabel + "§f|" + pvpColor + pvpLabel + "§f]§r";
+    public void setShowOnline(boolean showOnline) {
+        this.showOnline = showOnline;
     }
 
-    // ─ NBT (guardar y cargar) --------------------------------------------------
+    /**
+     * Genera el prefijo completo para mostrar en chat y nametag.
+     *
+     * Formato: [Rx|Px]
+     * Con indicador online activo: §a● §r[Rx|Px]
+     * Con tiers sin asignar: [R?|P?]
+     *
+     * @return String con códigos de formato de Minecraft
+     */
+    public String getPrefix() {
+        String rolLabel  = hasRolTier() ? PrefixTagConfig.getRolLabel(rolTier) : "R?";
+        String pvpLabel  = hasPvpTier() ? PrefixTagConfig.getPvpLabel(pvpTier) : "P?";
+        String rolColor  = hasRolTier() ? PrefixTagConfig.getTierColor(rolTier) : "§f";
+        String pvpColor  = hasPvpTier() ? PrefixTagConfig.getTierColor(pvpTier) : "§f";
+        String online    = showOnline ? "§a● §r" : "";
+
+        return online + "§f[" + rolColor + rolLabel + "§f|" + pvpColor + pvpLabel + "§f]§r";
+    }
 
     /**
-     * Serializa los datos del jugador a un CompoundTag NBT.
-     * Se llama al guardar los datos en el PersistentData del jugador.
+     * Serializa los datos del jugador a un {@link CompoundTag} NBT.
+     * Llamado por {@link TierEventHandler} al hacer logout o al guardar manualmente.
+     *
+     * @return CompoundTag con todos los campos del jugador
      */
     public CompoundTag save() {
         CompoundTag tag = new CompoundTag();
@@ -124,25 +119,30 @@ public class PlayerTierData {
         tag.putBoolean("ShowOnline", showOnline);
         return tag;
     }
+
     /**
-     * Deserializa los datos desde un CompoundTag NBT.
-     * Se llama al cargar los datos cuando el jugador entra al servidor.
-     * @param tag El CompoundTag guardado previamente con save()
+     * Deserializa los datos desde un {@link CompoundTag} NBT.
+     * Llamado por {@link TierEventHandler} al hacer login con datos existentes.
+     *
+     * Los campos opcionales (NameColor, ShowOnline) tienen valores por defecto
+     * para mantener compatibilidad con saves de versiones anteriores del mod.
+     *
+     * @param tag CompoundTag guardado previamente con {@link #save()}
+     * @return Nueva instancia de PlayerTierData con los datos cargados
      */
     public static PlayerTierData load(CompoundTag tag) {
         PlayerTierData data = new PlayerTierData();
-        data.rolTier = tag.getInt("RolTier");
-        data.pvpTier = tag.getInt("PvpTier");
-        data.nameColor = tag.contains("NameColor") ? tag.getString("NameColor") : "white";
+        data.rolTier    = tag.getInt("RolTier");
+        data.pvpTier    = tag.getInt("PvpTier");
+        data.nameColor  = tag.contains("NameColor")  ? tag.getString("NameColor")   : "white";
         data.showOnline = tag.contains("ShowOnline") && tag.getBoolean("ShowOnline");
-
         return data;
     }
 
     /**
      * Reinicia ambos tiers a -1 (sin asignar).
-     * Se usa cuando un admin ejecuta /tier reset <jugador>.
-     * El jugador verá la GUI de selección la próxima vez que entre.
+     * La próxima vez que el jugador entre al servidor se le mostrará la GUI de selección.
+     * Llamado desde {@link TierCommand} al ejecutar /tier reset.
      */
     public void resetTiers() {
         this.rolTier = -1;

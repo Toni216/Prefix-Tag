@@ -13,36 +13,37 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * TierEventHandler
+ * Escucha eventos del servidor y actúa como capa de acceso a los datos de tier.
+ * Es el núcleo del mod en el lado servidor, gestiona:
  *
- * Escucha eventos del servidor relacionados con jugadores y chat.
- * Es el núcleo del mod en el lado servidor — gestiona:
- *   - Carga y guardado de datos de tier via NBT
- *   - Mapa en memoria para acceso rápido durante la sesión
- *   - Modificación del chat para añadir el prefijo
+ *   - Carga de datos NBT al hacer login y guardado al hacer logout
+ *   - Mapa en memoria (UUID > {@link PlayerTierData}) para acceso rápido durante la sesión
+ *   - Modificación del chat para anteponer el prefijo al nombre del jugador
+ *   - Envío del {@link OpenTierGuiPacket} si el jugador no tiene tiers asignados
  *
- * Los datos se mantienen en memoria mientras el jugador está conectado
- * y se persisten en NBT al desconectarse.
+ * El mapa en memoria evita leer NBT en cada evento de chat o nametag,
+ * lo que sería muy costoso en servidores con muchos jugadores activos.
  */
-
 @Mod.EventBusSubscriber(modid = PrefixTag.MOD_ID)
 public class TierEventHandler {
 
-    // Mapa en memoria: UUID del jugador → sus datos de tier
-    // Se usa para evitar leer NBT en cada evento, que sería muy lento
+    // Mapa en memoria: UUID del jugador → datos de tier activos en esta sesión.
+    // Se popula en onPlayerLogin y se limpia en onPlayerLogout.
     private static final Map<UUID, PlayerTierData> tierMap = new HashMap<>();
 
-    // Clave con la que se guardan los datos en el PersistentData del jugador
-    // Cambiar esta clave en una versión futura haría perder los datos guardados
+    // Clave NBT usada para guardar los datos en el PersistentData del jugador.
+    // ¡No cambiar entre versiones! Hacerlo borraría los datos de todos los jugadores.
     private static final String NBT_KEY = "PrefixTagData";
-
-    // ── Al entrar al servidor ─────────────────────────────────────────────────
 
     /**
      * Se ejecuta cuando un jugador entra al servidor.
-     * Si ya tiene datos NBT guardados, los carga al mapa en memoria.
-     * Si es la primera vez que entra, crea un registro vacío.
-     * La GUI de selección se lanza desde el cliente (ClientTierHandler).
+     *
+     * Carga sus datos desde NBT si ya existen, o crea un registro vacío si es
+     * la primera vez que entra. A continuación, si no tiene ambos tiers asignados,
+     * envía un {@link OpenTierGuiPacket} para que el cliente abra la GUI de selección.
+     *
+     * El packet garantiza que la GUI se muestre correctamente tanto en LAN
+     * como en servidores dedicados, sin depender de código del lado cliente.
      */
     @SubscribeEvent
     public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
@@ -50,71 +51,67 @@ public class TierEventHandler {
 
         CompoundTag persistedData = player.getPersistentData();
 
-        if (persistedData.contains(NBT_KEY)) {
-            // Jugador conocido: cargar datos desde NBT
-            PlayerTierData data = PlayerTierData.load(persistedData.getCompound(NBT_KEY));
-            tierMap.put(player.getUUID(), data);
-        } else {
-            // Jugador nuevo: crear datos vacíos (-1)
-            PlayerTierData data = new PlayerTierData();
-            tierMap.put(player.getUUID(), data);
+        PlayerTierData data = persistedData.contains(NBT_KEY)
+                ? PlayerTierData.load(persistedData.getCompound(NBT_KEY))
+                : new PlayerTierData();
+
+        tierMap.put(player.getUUID(), data);
+
+        if (!data.isFullyAssigned()) {
+            PacketHandler.sendToPlayer(new OpenTierGuiPacket(), player);
         }
     }
 
-    // ── Al salir del servidor ─────────────────────────────────────────────────
-
     /**
      * Se ejecuta cuando un jugador sale del servidor.
-     * Guarda los datos actuales en NBT y los elimina del mapa en memoria.
-     * Esto garantiza que los tiers persisten entre sesiones.
+     * Persiste los datos actuales en NBT y los elimina del mapa en memoria.
      */
     @SubscribeEvent
     public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
 
-        PlayerTierData data = tierMap.get(player.getUUID());
+        PlayerTierData data = tierMap.remove(player.getUUID());
         if (data != null) {
             player.getPersistentData().put(NBT_KEY, data.save());
-            tierMap.remove(player.getUUID());
         }
     }
 
-    // ── En el chat: añadir prefijo ────────────────────────────────────────────
-
     /**
-     * Se ejecuta cada vez que un jugador envía un mensaje al chat.
-     * Modifica el mensaje para añadir el prefijo [Rx|Px] delante del nombre.
-     * Ejemplo: [R2|P3] Jugador: hola
-     * No fuerza ningún color para evitar conflictos con otros mods.
+     * Se ejecuta cuando un jugador envía un mensaje al chat.
+     * Antepone el prefijo [Rx|Px] y aplica el color de nombre configurado.
+     * Ejemplo de resultado: §a● §r§f[§aR2§f|§6P3§f]§r §6Jugador§r: hola
      */
     @SubscribeEvent
     public static void onChat(ServerChatEvent event) {
         ServerPlayer player = event.getPlayer();
         PlayerTierData data = tierMap.get(player.getUUID());
+        if (data == null) return;
 
-        if (data != null) {
-            String prefix = data.getPrefix();
-            Component newMessage = Component.literal(
-                    prefix + " " + data.getColorCode() + player.getName().getString() + "§r: " + event.getRawText()
-            );
-            event.setMessage(newMessage);
-        }
+        String texto = data.getPrefix() + " "
+                + data.getColorCode() + player.getName().getString()
+                + "§r: " + event.getRawText();
+        event.setMessage(Component.literal(texto));
     }
 
-    // ── Métodos de acceso para otros archivos -----------------------------------
     /**
-     * Devuelve los datos de tier de un jugador por su UUID.
-     * Devuelve null si el jugador no está conectado o no tiene datos.
-     * Usado por TierCommand y ClientTierHandler.
+     * Devuelve los datos de tier de un jugador conectado por su UUID.
+     * Devuelve {@code null} si el jugador no está en línea o no tiene datos.
+     *
+     * Usado por {@link TierCommand} y {@link ClientTierHandler}.
+     *
+     * @param uuid UUID del jugador
+     * @return Sus datos de tier, o null si no está conectado
      */
     public static PlayerTierData getPlayerData(UUID uuid) {
         return tierMap.get(uuid);
     }
 
     /**
-     * Guarda los datos actuales del jugador en su NBT persistente.
-     * Se llama después de cualquier cambio de tier para garantizar
-     * que los datos no se pierdan si el servidor se cierra inesperadamente.
+     * Persiste inmediatamente los datos del jugador en su NBT.
+     * Se llama tras cualquier cambio de tier para evitar pérdida de datos
+     * si el servidor se cierra inesperadamente antes del logout.
+     *
+     * @param player El jugador cuyos datos se van a guardar
      */
     public static void savePlayerData(ServerPlayer player) {
         PlayerTierData data = tierMap.get(player.getUUID());

@@ -1,53 +1,47 @@
 package com.cipollomods.prefixtag;
 
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
 /**
- * PrefixTag
+ * Clase principal del mod y punto de entrada que Forge carga al arrancar Minecraft.
+ * Su responsabilidad es mínima: registrar la configuración y el canal de red.
+ * El grueso de la lógica está distribuido entre las clases especializadas:
  *
- * Clase principal del mod. Es el punto de entrada que Forge carga
- * al arrancar Minecraft.
- *
- * Se encarga de:
- *   - Definir el MOD_ID usado en todas las anotaciones del mod
- *   - Registrar el evento de setup del cliente para conectar la GUI
- *
- * El grueso de la lógica está repartido entre:
- *   - PlayerTierData      → almacenamiento de datos por jugador
- *   - TierEventHandler    → eventos de servidor (login, chat)
- *   - TierCommand         → comandos de admin e internos
- *   - TierSelectionScreen → GUI de selección de tier
- *   - ClientTierHandler   → eventos de cliente (login, nametag)
+ *   - {@link PlayerTierData}      > modelo de datos de tier por jugador (NBT)
+ *   - {@link TierEventHandler}    > eventos de servidor: login, logout, chat
+ *   - {@link TierCommand}         > comandos /tier y /tierself
+ *   - {@link TierSelectionScreen} > GUI de selección de tier (cliente)
+ *   - {@link ClientTierHandler}   > eventos de cliente: nametag
+ *   - {@link PacketHandler}       > registro del canal de red servidor → cliente
+ *   - {@link OpenTierGuiPacket}   > packet que ordena al cliente abrir la GUI
+ *   - {@link PrefixTagConfig}     > configuración via Forge Config API (prefixtag.toml)
  */
-
 @Mod(PrefixTag.MOD_ID)
 public class PrefixTag {
 
-    // Identificador único del mod. Debe coincidir con el modId en mods.toml
     public static final String MOD_ID = "prefixtag";
 
     public PrefixTag() {
-        // Registrar la configuración del servidor
-        ModLoadingContext.get().registerConfig(
-                net.minecraftforge.fml.config.ModConfig.Type.COMMON,
-                PrefixTagConfig.SPEC,
-                "prefixtag.toml"
-        );
+        // Registrar la configuración COMMON — genera prefixtag.toml en config/
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, PrefixTagConfig.SPEC, "prefixtag.toml");
 
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onClientSetup);
+        // Registrar el canal de red durante el setup, no en el constructor,
+        // para garantizar que Forge ha preparado el entorno de red.
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onCommonSetup);
+
         MinecraftForge.EVENT_BUS.register(this);
     }
 
     /**
-     * Se ejecuta durante la inicialización del cliente.
-     * Registra el evento onClientLogin de ClientTierHandler en el bus de eventos,
-     * lo que permite lanzar la GUI de selección cuando el jugador se conecta.
+     * Se ejecuta durante la inicialización común (cliente y servidor).
+     * Registra el canal de red y todos los packets del mod.
      */
-    private void onClientSetup(FMLClientSetupEvent event) {
-        MinecraftForge.EVENT_BUS.addListener(ClientTierHandler::onClientLogin);
+    private void onCommonSetup(FMLCommonSetupEvent event) {
+        PacketHandler.register();
     }
 }
