@@ -78,19 +78,21 @@ public class TierEventHandler {
 
     /**
      * Se ejecuta cuando un jugador envía un mensaje al chat.
-     * Antepone el prefijo [Rx|Px] y aplica el color de nombre configurado.
+     * Antepone el prefijo [Rx|Px] y aplica el color y nombre de display configurados.
      * Ejemplo de resultado: §a● §r§f[§aR2§f|§6P3§f]§r §6Jugador§r: hola
      */
     @SubscribeEvent
     public static void onChat(ServerChatEvent event) {
-        ServerPlayer player = event.getPlayer();
-        PlayerTierData data = tierMap.get(player.getUUID());
+        PlayerTierData data = tierMap.get(event.getPlayer().getUUID());
         if (data == null) return;
 
-        String texto = data.getPrefix() + " "
-                + data.getColorCode() + player.getName().getString()
-                + "§r: " + event.getRawText();
-        event.setMessage(Component.literal(texto));
+        // Usa el nombre personalizado si existe, o el username real si no
+        String nombre = data.getDisplayName(event.getPlayer().getName().getString());
+
+        Component mensaje = Component.literal(
+                data.getPrefix() + " " + data.getColorCode() + nombre + "§r: " + event.getRawText()
+        );
+        event.setMessage(mensaje);
     }
 
     /**

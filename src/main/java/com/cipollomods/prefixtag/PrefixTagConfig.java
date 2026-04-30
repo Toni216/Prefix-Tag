@@ -7,137 +7,135 @@ import net.minecraftforge.common.ForgeConfigSpec;
  * Al cargarse por primera vez genera el archivo 'prefixtag.toml' en config/.
  *
  * Secciones configurables:
- *   - rol_labels   > etiquetas de cada tier de Rol (R1–R5 por defecto)
- *   - pvp_labels   > etiquetas de cada tier de PvP (P1–P5 por defecto)
+ *   - tier_count   > número de tiers activos para Rol y PvP (2–10)
+ *   - rol_labels   > etiquetas de cada tier de Rol (hasta 10)
+ *   - pvp_labels   > etiquetas de cada tier de PvP (hasta 10)
  *   - gui_texts    > título y descripción de las pantallas de selección
- *   - tier_colors  > color del prefijo para cada número de tier
+ *   - tier_colors  > color del prefijo para cada número de tier (hasta 10)
  *
  * Los comentarios de los campos TOML están en inglés para que sean legibles
  * por cualquier administrador de servidor independientemente del idioma.
  */
 public class PrefixTagConfig {
 
-    /** Spec registrado en Forge. Se pasa a {@link net.minecraftforge.fml.ModLoadingContext#registerConfig}. */
+    // Spec registrado en Forge. Se pasa a {@link net.minecraftforge.fml.ModLoadingContext#registerConfig}
     public static final ForgeConfigSpec SPEC;
 
-    public static ForgeConfigSpec.ConfigValue<String> ROL1_LABEL;
-    public static ForgeConfigSpec.ConfigValue<String> ROL2_LABEL;
-    public static ForgeConfigSpec.ConfigValue<String> ROL3_LABEL;
-    public static ForgeConfigSpec.ConfigValue<String> ROL4_LABEL;
-    public static ForgeConfigSpec.ConfigValue<String> ROL5_LABEL;
+    // Número de tiers activos — determina cuántas etiquetas y colores se usan
+    public static ForgeConfigSpec.ConfigValue<Integer> ROL_TIER_COUNT;
+    public static ForgeConfigSpec.ConfigValue<Integer> PVP_TIER_COUNT;
 
-    public static ForgeConfigSpec.ConfigValue<String> PVP1_LABEL;
-    public static ForgeConfigSpec.ConfigValue<String> PVP2_LABEL;
-    public static ForgeConfigSpec.ConfigValue<String> PVP3_LABEL;
-    public static ForgeConfigSpec.ConfigValue<String> PVP4_LABEL;
-    public static ForgeConfigSpec.ConfigValue<String> PVP5_LABEL;
+    // Arrays de 10 posiciones (índice 0 = tier 1, índice 9 = tier 10)
+    public static final ForgeConfigSpec.ConfigValue<String>[] ROL_LABELS = new ForgeConfigSpec.ConfigValue[10];
+    public static final ForgeConfigSpec.ConfigValue<String>[] PVP_LABELS = new ForgeConfigSpec.ConfigValue[10];
+    public static final ForgeConfigSpec.ConfigValue<String>[] TIER_COLORS = new ForgeConfigSpec.ConfigValue[10];
 
     public static ForgeConfigSpec.ConfigValue<String> ROL_GUI_TITLE;
     public static ForgeConfigSpec.ConfigValue<String> ROL_GUI_DESC;
     public static ForgeConfigSpec.ConfigValue<String> PVP_GUI_TITLE;
     public static ForgeConfigSpec.ConfigValue<String> PVP_GUI_DESC;
 
-    public static ForgeConfigSpec.ConfigValue<String> TIER1_COLOR;
-    public static ForgeConfigSpec.ConfigValue<String> TIER2_COLOR;
-    public static ForgeConfigSpec.ConfigValue<String> TIER3_COLOR;
-    public static ForgeConfigSpec.ConfigValue<String> TIER4_COLOR;
-    public static ForgeConfigSpec.ConfigValue<String> TIER5_COLOR;
+    // Colores por defecto para los 10 posibles tiers
+    private static final String[] DEFAULT_COLORS = {
+            "green", "yellow", "gold", "red", "dark_red",
+            "aqua", "light_purple", "blue", "dark_purple", "dark_gray"
+    };
 
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
 
-        builder.comment("Labels for each Rol tier").push("rol_labels");
-        ROL1_LABEL = builder.comment("Label for Rol tier 1").define("rol1", "R1");
-        ROL2_LABEL = builder.comment("Label for Rol tier 2").define("rol2", "R2");
-        ROL3_LABEL = builder.comment("Label for Rol tier 3").define("rol3", "R3");
-        ROL4_LABEL = builder.comment("Label for Rol tier 4").define("rol4", "R4");
-        ROL5_LABEL = builder.comment("Label for Rol tier 5").define("rol5", "R5");
+        // Numero de tiers — se lee al arrancar para saber cuántos usar
+        builder.comment("Number of active tiers. Min: 2, Max: 10").push("tier_count");
+        ROL_TIER_COUNT = builder.comment("Number of Rol tiers").define("rol_tier_count", 5);
+        PVP_TIER_COUNT = builder.comment("Number of PvP tiers").define("pvp_tier_count", 5);
         builder.pop();
 
-        builder.comment("Labels for each PvP tier").push("pvp_labels");
-        PVP1_LABEL = builder.comment("Label for PvP tier 1").define("pvp1", "P1");
-        PVP2_LABEL = builder.comment("Label for PvP tier 2").define("pvp2", "P2");
-        PVP3_LABEL = builder.comment("Label for PvP tier 3").define("pvp3", "P3");
-        PVP4_LABEL = builder.comment("Label for PvP tier 4").define("pvp4", "P4");
-        PVP5_LABEL = builder.comment("Label for PvP tier 5").define("pvp5", "P5");
+        // Etiquetas de Rol — siempre se registran las 10, solo se usan las primeras COUNT
+        builder.comment("Labels for each Rol tier (only the first rol_tier_count are used)").push("rol_labels");
+        for (int i = 0; i < 10; i++) {
+            int num = i + 1;
+            ROL_LABELS[i] = builder.define("rol" + num, "R" + num);
+        }
         builder.pop();
 
+        // Etiquetas de PvP
+        builder.comment("Labels for each PvP tier (only the first pvp_tier_count are used)").push("pvp_labels");
+        for (int i = 0; i < 10; i++) {
+            int num = i + 1;
+            PVP_LABELS[i] = builder.define("pvp" + num, "P" + num);
+        }
+        builder.pop();
+
+        // Textos de la GUI
         builder.comment("Texts shown in the tier selection screen").push("gui_texts");
-        ROL_GUI_TITLE = builder.comment("Title of the Rol selection screen")
-                .define("rol_title", "Selecciona tu rango de Rol");
-        ROL_GUI_DESC  = builder.comment("Description of the Rol selection screen")
-                .define("rol_desc", "Elige el rango de rol que desees tener, puedes leerlo en el canal de discord dispuesto para ello");
-        PVP_GUI_TITLE = builder.comment("Title of the PvP selection screen")
-                .define("pvp_title", "Selecciona tu rango de PvP");
-        PVP_GUI_DESC  = builder.comment("Description of the PvP selection screen")
-                .define("pvp_desc", "Elige el rango de PvP que desees tener, puedes leerlo en el canal de discord dispuesto para ello");
+        ROL_GUI_TITLE = builder.define("rol_title", "Select your Rol rank");
+        ROL_GUI_DESC  = builder.define("rol_desc", "Choose the Rol rank you want. You can read about each rank in the designated Discord channel.");
+        PVP_GUI_TITLE = builder.define("pvp_title", "Select your PvP rank");
+        PVP_GUI_DESC  = builder.define("pvp_desc", "Choose the PvP rank you want. You can read about each rank in the designated Discord channel.");
         builder.pop();
 
+        // Colores por tier
         builder.comment("Color of the prefix for each tier number. " +
                         "Available values: black, dark_blue, dark_green, dark_aqua, dark_red, " +
-                        "dark_purple, gold, gray, dark_gray, blue, green, aqua, red, light_purple, yellow, white")
+                        "dark_purple, gold, gray, dark_gray, blue, green, aqua, red, light_purple, yellow, white. " +
+                        "Only the first rol_tier_count / pvp_tier_count entries are used.")
                 .push("tier_colors");
-        TIER1_COLOR = builder.comment("Color for tier 1 prefix").define("tier1_color", "green");
-        TIER2_COLOR = builder.comment("Color for tier 2 prefix").define("tier2_color", "yellow");
-        TIER3_COLOR = builder.comment("Color for tier 3 prefix").define("tier3_color", "gold");
-        TIER4_COLOR = builder.comment("Color for tier 4 prefix").define("tier4_color", "red");
-        TIER5_COLOR = builder.comment("Color for tier 5 prefix").define("tier5_color", "dark_red");
+        for (int i = 0; i < 10; i++) {
+            int num = i + 1;
+            TIER_COLORS[i] = builder.define("tier" + num + "_color", DEFAULT_COLORS[i]);
+        }
         builder.pop();
 
         SPEC = builder.build();
     }
 
+    // Acceso al numero de tiers --------
+
+    /** Número de tiers de Rol activos según la config (2–10). */
+    public static int getRolTierCount() {
+        return ROL_TIER_COUNT.get();
+    }
+
+    /** Número de tiers de PvP activos según la config (2–10). */
+    public static int getPvpTierCount() {
+        return PVP_TIER_COUNT.get();
+    }
+
+    // Acceso a etiquetas ------
+
     /**
      * Devuelve la etiqueta configurada para un tier de Rol.
      *
-     * @param tier Número de tier (1–5)
-     * @return La etiqueta configurada, o "R?" si el tier no es válido
+     * @param tier Número de tier (1–getRolTierCount())
+     * @return La etiqueta configurada, o "R?" si el tier está fuera de rango
      */
     public static String getRolLabel(int tier) {
-        return switch (tier) {
-            case 1 -> ROL1_LABEL.get();
-            case 2 -> ROL2_LABEL.get();
-            case 3 -> ROL3_LABEL.get();
-            case 4 -> ROL4_LABEL.get();
-            case 5 -> ROL5_LABEL.get();
-            default -> "R?";
-        };
+        if (tier < 1 || tier > 10) return "R?";
+        return ROL_LABELS[tier - 1].get();
     }
 
     /**
      * Devuelve la etiqueta configurada para un tier de PvP.
      *
-     * @param tier Número de tier (1–5)
-     * @return La etiqueta configurada, o "P?" si el tier no es válido
+     * @param tier Número de tier (1–getPvpTierCount())
+     * @return La etiqueta configurada, o "P?" si el tier está fuera de rango
      */
     public static String getPvpLabel(int tier) {
-        return switch (tier) {
-            case 1 -> PVP1_LABEL.get();
-            case 2 -> PVP2_LABEL.get();
-            case 3 -> PVP3_LABEL.get();
-            case 4 -> PVP4_LABEL.get();
-            case 5 -> PVP5_LABEL.get();
-            default -> "P?";
-        };
+        if (tier < 1 || tier > 10) return "P?";
+        return PVP_LABELS[tier - 1].get();
     }
+
+    // Acceso a colores --------
 
     /**
      * Devuelve el código de formato de Minecraft para el color de un tier.
-     * Lee el nombre de color desde la config y lo convierte con {@link #colorNameToCode}.
      *
-     * @param tier Número de tier (1–5)
+     * @param tier Número de tier (1–10)
      * @return Código de formato de Minecraft (ej. "§a")
      */
     public static String getTierColor(int tier) {
-        String colorName = switch (tier) {
-            case 1 -> TIER1_COLOR.get();
-            case 2 -> TIER2_COLOR.get();
-            case 3 -> TIER3_COLOR.get();
-            case 4 -> TIER4_COLOR.get();
-            case 5 -> TIER5_COLOR.get();
-            default -> "white";
-        };
-        return colorNameToCode(colorName);
+        if (tier < 1 || tier > 10) return "§f";
+        return colorNameToCode(TIER_COLORS[tier - 1].get());
     }
 
     /**
