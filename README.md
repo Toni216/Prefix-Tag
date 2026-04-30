@@ -67,7 +67,6 @@ When a player joins for the first time, a selection screen appears asking them t
 ---
 
 ## Requirements
-- Minecraft 1.20.1
 - Forge 1.20.1
 
 ---
