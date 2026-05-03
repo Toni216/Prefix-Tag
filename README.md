@@ -96,12 +96,12 @@ On first launch, a `prefixtag.toml` file is generated in your `config/` folder.
 ---
 
 
-## Requirements
+## 🔧 Requirements
 - Forge 1.20.1
 
 ---
 
-## Installation
+## 📦 Installation
 1. Download the `.jar` file
 2. Place it in your `mods/` folder
 3. Make sure you are running **Forge 1.20.1**
