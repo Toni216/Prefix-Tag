@@ -1,9 +1,9 @@
-# PrefixTag
-A Forge 1.20.1 mod that adds a fully configurable dual tier system to your server — one for Roleplay rank and one for PvP rank. Each player always displays a combined prefix in chat and above their head, with colors that reflect their tier level.
+# 🏷️ PrefixTag
+This mod adds a fully configurable dual tier system to your server — one for Roleplay rank and one for PvP rank. Each player always displays a combined prefix in chat and above their head, with colors that reflect their tier level.
 
 ---
 
-## Features
+## ⚙️ Features
 - **Two independent tier systems**: Rol and PvP, each with a configurable number of tiers (2–10)
 - **Always-visible prefix**: `[R2|P3] PlayerName` in chat and above the player's head
 - **Tier colors**: each tier has its own configurable color — brackets stay white to avoid conflicts with other mods
@@ -17,7 +17,59 @@ A Forge 1.20.1 mod that adds a fully configurable dual tier system to your serve
 
 ---
 
-## Commands
+## 🛠️ Configuration
+
+On first launch, a `prefixtag.toml` file is generated in your `config/` folder.
+
+```toml
+[tier_count]
+  rol_tier_count = 5
+  pvp_tier_count = 5
+
+[rol_labels]
+	rol1 = "R1"
+	rol2 = "R2"
+	rol3 = "R3"
+	rol4 = "R4"
+	rol5 = "R5"
+	rol6 = "R6"
+	rol7 = "R7"
+	rol8 = "R8"
+	rol9 = "R9"
+	rol10 = "R10"
+
+[pvp_labels]
+	pvp1 = "P1"
+	pvp2 = "P2"
+	pvp3 = "P3"
+	pvp4 = "P4"
+	pvp5 = "P5"
+	pvp6 = "P6"
+	pvp7 = "P7"
+	pvp8 = "P8"
+	pvp9 = "P9"
+	pvp10 = "P10"
+
+[gui_texts]
+	rol_title = "Select your Rol rank"
+	rol_desc = "Choose the Rol rank you want. You can read about each rank in the designated Discord channel."
+	pvp_title = "Select your PvP rank"
+	pvp_desc = "Choose the PvP rank you want. You can read about each rank in the designated Discord channel."
+
+[tier_colors]
+	tier1_color = "green"
+	tier2_color = "yellow"
+	tier3_color = "gold"
+	tier4_color = "red"
+	tier5_color = "dark_red"
+	tier6_color = "aqua"
+	tier7_color = "light_purple"
+	tier8_color = "blue"
+	tier9_color = "dark_purple"
+	tier10_color = "dark_gray"
+```
+
+## 💻 Commands
 
 ### Admin — Op level 2
 
@@ -31,6 +83,9 @@ A Forge 1.20.1 mod that adds a fully configurable dual tier system to your serve
 | `/tier clearname <player>` | Remove a player's custom display name |
 | `/tier online <player> <true\|false>` | Toggle the green ● indicator left of the prefix |
 
+### Available colors
+`black`, `dark_blue`, `dark_green`, `dark_aqua`, `dark_red`, `dark_purple`, `gold`, `gray`, `dark_gray`, `blue`, `green`, `aqua`, `red`, `light_purple`, `yellow`, `white`
+
 ### Player — No permissions required
 
 | Command | Description |
@@ -38,73 +93,20 @@ A Forge 1.20.1 mod that adds a fully configurable dual tier system to your serve
 | `/tierself setname <name>` | Set a custom display name (no color codes allowed) |
 | `/tierself clearname` | Remove your custom display name |
 
-### Available colors
-`black`, `dark_blue`, `dark_green`, `dark_aqua`, `dark_red`, `dark_purple`, `gold`, `gray`, `dark_gray`, `blue`, `green`, `aqua`, `red`, `light_purple`, `yellow`, `white`
-
 ---
 
-## Configuration
-On first launch, PrefixTag generates a `prefixtag.toml` file in the `config/` folder. You can edit:
-- **Tier count** — set between 2 and 10 tiers independently for Rol and PvP
-- **Tier labels** — change `R1`, `R2`... to anything you want (e.g. `Novice`, `Master`)
-- **PvP tier labels** — same for `P1`, `P2`...
-- **GUI texts** — customize the title and description of the selection screen
-- **Tier colors** — set the color for each tier level
-
----
-
-## Installation
-1. Download the `.jar` from the [Releases](../../releases) page
-2. Place it in your server's `mods/` folder
-3. Make sure you are running **Forge 1.20.1**
-4. Start the server — the config file will be generated automatically
-
----
-
-## How it works
-When a player joins for the first time, a selection screen appears asking them to choose their Rol tier, followed by their PvP tier. Once selected, the prefix `[Rx|Px]` appears permanently next to their name in chat and above their head in the world. Admins can override, reset or recolor any player's data at any time using the `/tier` commands. Players can also set a custom display name that replaces their username while keeping their assigned name color.
-
----
 
 ## Requirements
-- Minecraft 1.20.1
 - Forge 1.20.1
 
 ---
 
-## Changelog
+## Installation
+1. Download the `.jar` file
+2. Place it in your `mods/` folder
+3. Make sure you are running **Forge 1.20.1**
+4. Start the world — the config file will be generated automatically
 
-### v1.4
-- Rol and PvP tier counts are now independently configurable (2–10) via `prefixtag.toml`
-- Tier selection GUI adapts dynamically, displaying buttons in rows of up to 3
-- Players can set a custom display name with `/tierself setname <name>`
-- Players can remove their custom name with `/tierself clearname`
-- Admins can remove a player's custom name with `/tier clearname <player>`
-- Custom names respect the color assigned by admins automatically
+## 👤 Author
 
-### v1.3
-- Added toggleable online indicator (`●`) left of the prefix
-- Added `/tier online <player> <true|false>` command
-
-### v1.2
-- Added tier colors (green to red scale)
-- Added `/tier setcolor <player> <color>` command
-- Added configurable tier labels, GUI texts via `prefixtag.toml`
-- Brackets and separator stay white to avoid conflicts with other mods
-
-### v1.1
-- Added prefix above player's head (nametag)
-- Added `/tier reset <player>` command
-- Removed forced colors to avoid conflicts with other mods
-
-### v1.0
-- Initial release
-- Dual tier system (Rol + PvP)
-- First-join GUI with two-step selection
-- Admin commands: setrol, setpvp, check
-- NBT persistence
-
----
-
-## License
-This mod is part of the **Toni's Mods** project. MIT License
+Made by me for CipolloLand server.
