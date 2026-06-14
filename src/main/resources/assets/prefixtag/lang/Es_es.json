@@ -1,0 +1,28 @@
+{
+  "prefixtag.gui.rol_title": "Edita el título de Rol en la config.",
+  "prefixtag.gui.rol_desc": "Edita la descripción de Rol en la config.",
+  "prefixtag.gui.pvp_title": "Edita el título de PvP en la config.",
+  "prefixtag.gui.pvp_desc": "Edita la descripción de PvP en la config.",
+
+  "prefixtag.desc.rol1": "§a● §7Edita esta descripción en la config.",
+  "prefixtag.desc.rol2": "§e● §7Edita esta descripción en la config.",
+  "prefixtag.desc.rol3": "§6● §7Edita esta descripción en la config.",
+  "prefixtag.desc.rol4": "§c● §7Edita esta descripción en la config.",
+  "prefixtag.desc.rol5": "§4● §7Edita esta descripción en la config.",
+  "prefixtag.desc.rol6": "§b● §7Edita esta descripción en la config.",
+  "prefixtag.desc.rol7": "§d● §7Edita esta descripción en la config.",
+  "prefixtag.desc.rol8": "§9● §7Edita esta descripción en la config.",
+  "prefixtag.desc.rol9": "§5● §7Edita esta descripción en la config.",
+  "prefixtag.desc.rol10": "§8● §7Edita esta descripción en la config.",
+
+  "prefixtag.desc.pvp1": "§a● §7Edita esta descripción en la config.",
+  "prefixtag.desc.pvp2": "§e● §7Edita esta descripción en la config.",
+  "prefixtag.desc.pvp3": "§6● §7Edita esta descripción en la config.",
+  "prefixtag.desc.pvp4": "§c● §7Edita esta descripción en la config.",
+  "prefixtag.desc.pvp5": "§4● §7Edita esta descripción en la config.",
+  "prefixtag.desc.pvp6": "§b● §7Edita esta descripción en la config.",
+  "prefixtag.desc.pvp7": "§d● §7Edita esta descripción en la config.",
+  "prefixtag.desc.pvp8": "§9● §7Edita esta descripción en la config.",
+  "prefixtag.desc.pvp9": "§5● §7Edita esta descripción en la config.",
+  "prefixtag.desc.pvp10": "§8● §7Edita esta descripción en la config."
+}

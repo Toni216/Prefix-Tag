@@ -1,0 +1,28 @@
+{
+  "prefixtag.gui.rol_title": "Select your Rol rank",
+  "prefixtag.gui.rol_desc": "Choose the Rol rank you want. You can read about each rank in the designated Discord channel.",
+  "prefixtag.gui.pvp_title": "Select your PvP rank",
+  "prefixtag.gui.pvp_desc": "Choose the PvP rank you want. You can read about each rank in the designated Discord channel.",
+
+  "prefixtag.desc.rol1": "§a● §7Edit this description in the config.",
+  "prefixtag.desc.rol2": "§e● §7Edit this description in the config.",
+  "prefixtag.desc.rol3": "§6● §7Edit this description in the config.",
+  "prefixtag.desc.rol4": "§c● §7Edit this description in the config.",
+  "prefixtag.desc.rol5": "§4● §7Edit this description in the config.",
+  "prefixtag.desc.rol6": "§b● §7Edit this description in the config.",
+  "prefixtag.desc.rol7": "§d● §7Edit this description in the config.",
+  "prefixtag.desc.rol8": "§9● §7Edit this description in the config.",
+  "prefixtag.desc.rol9": "§5● §7Edit this description in the config.",
+  "prefixtag.desc.rol10": "§8● §7Edit this description in the config.",
+
+  "prefixtag.desc.pvp1": "§a● §7Edit this description in the config.",
+  "prefixtag.desc.pvp2": "§e● §7Edit this description in the config.",
+  "prefixtag.desc.pvp3": "§6● §7Edit this description in the config.",
+  "prefixtag.desc.pvp4": "§c● §7Edit this description in the config.",
+  "prefixtag.desc.pvp5": "§4● §7Edit this description in the config.",
+  "prefixtag.desc.pvp6": "§b● §7Edit this description in the config.",
+  "prefixtag.desc.pvp7": "§d● §7Edit this description in the config.",
+  "prefixtag.desc.pvp8": "§9● §7Edit this description in the config.",
+  "prefixtag.desc.pvp9": "§5● §7Edit this description in the config.",
+  "prefixtag.desc.pvp10": "§8● §7Edit this description in the config."
+}
