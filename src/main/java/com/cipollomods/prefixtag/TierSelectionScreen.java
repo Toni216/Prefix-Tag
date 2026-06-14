@@ -2,6 +2,7 @@ package com.cipollomods.prefixtag;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
@@ -20,12 +21,19 @@ import net.minecraft.util.FormattedCharSequence;
  * La pantalla no se puede cerrar con Escape ({@link #shouldCloseOnEsc} = false)
  * para garantizar que el jugador siempre tenga ambos tiers asignados.
  *
- * Los botones se distribuyen en filas de máximo 3, centradas horizontalmente.
- * El número de botones depende del numero de tiers configurado en
- * {@link PrefixTagConfig}.
+ * El número de botones es dinámico (lo da {@link PrefixTagConfig#getRolTierCount}
+ * / {@link PrefixTagConfig#getPvpTierCount}) y se disponen en filas de máximo
+ * {@link #MAX_PER_ROW}. El texto se ancla por encima del bloque de botones para
+ * que nunca se solape, sea cual sea el número de filas.
  *
  * Cada elección se envía al servidor via el comando /tierself,
  * que valida que el tier no esté ya asignado antes de guardarlo.
+ *
+ * Localización:
+ *   El título, la descripción de pantalla y los tooltips de cada botón se
+ *   construyen con {@link Component#translatable}. Si el valor de la config es
+ *   una clave de traducción se localiza al idioma del jugador; si el admin lo
+ *   ha sustituido por texto literal, se muestra tal cual.
  */
 public class TierSelectionScreen extends Screen {
 
@@ -53,11 +61,11 @@ public class TierSelectionScreen extends Screen {
     /** Espacio horizontal entre botones en píxeles. */
     private static final int BTN_GAP = 10;
 
+    /** Número máximo de botones por fila. */
+    private static final int MAX_PER_ROW = 3;
+
     /** Espacio vertical entre filas de botones en píxeles. */
     private static final int ROW_GAP = 8;
-
-    /** Máximo de botones por fila. */
-    private static final int MAX_PER_ROW = 3;
 
     // ─ Constructor --------------
 
@@ -65,7 +73,7 @@ public class TierSelectionScreen extends Screen {
      * @param mode {@link Mode#ROL} para la pantalla de Rol, {@link Mode#PVP} para la de PvP
      */
     public TierSelectionScreen(Mode mode) {
-        super(Component.literal(mode == Mode.ROL
+        super(Component.translatable(mode == Mode.ROL
                 ? PrefixTagConfig.ROL_GUI_TITLE.get()
                 : PrefixTagConfig.PVP_GUI_TITLE.get()));
         this.mode = mode;
@@ -85,13 +93,15 @@ public class TierSelectionScreen extends Screen {
 
     /**
      * Crea y posiciona los botones de selección de tier en filas de máximo {@link #MAX_PER_ROW}.
-     * Cada fila se centra horizontalmente de forma independiente.
+     * Cada fila se centra horizontalmente de forma independiente. A cada botón se le asigna
+     * un tooltip con la descripción de su tier; si la descripción está vacía (el admin la ha
+     * borrado en la config), ese botón no muestra tooltip.
      * Se llama automáticamente al abrir la pantalla y al redimensionar la ventana.
      */
     @Override
     protected void init() {
-        int count  = mode == Mode.ROL ? PrefixTagConfig.getRolTierCount() : PrefixTagConfig.getPvpTierCount();
-        int rows   = (int) Math.ceil((double) count / MAX_PER_ROW);
+        int count = mode == Mode.ROL ? PrefixTagConfig.getRolTierCount() : PrefixTagConfig.getPvpTierCount();
+        int rows  = (int) Math.ceil((double) count / MAX_PER_ROW);
 
         // Altura total ocupada por todas las filas, centrada verticalmente
         int totalH = rows * BTN_H + (rows - 1) * ROW_GAP;
@@ -115,10 +125,22 @@ public class TierSelectionScreen extends Screen {
                         ? PrefixTagConfig.getRolLabel(tier)
                         : PrefixTagConfig.getPvpLabel(tier);
 
-                this.addRenderableWidget(Button.builder(
+                Button button = Button.builder(
                         Component.literal(label),
                         btn -> onTierSelected(tier)
-                ).pos(x, y).size(BTN_W, BTN_H).build());
+                ).pos(x, y).size(BTN_W, BTN_H).build();
+
+                // Tooltip de descripción. Component.translatable gestiona solo los
+                // saltos de línea (\n) y el ajuste automático al ancho del tooltip.
+                // Si la descripción está vacía, no se asigna tooltip a ese botón.
+                String desc = mode == Mode.ROL
+                        ? PrefixTagConfig.getRolDesc(tier)
+                        : PrefixTagConfig.getPvpDesc(tier);
+                if (desc != null && !desc.isBlank()) {
+                    button.setTooltip(Tooltip.create(Component.translatable(desc)));
+                }
+
+                this.addRenderableWidget(button);
             }
         }
     }
@@ -127,7 +149,9 @@ public class TierSelectionScreen extends Screen {
 
     /**
      * Dibuja el fondo, el título y la descripción en cada frame.
-     * El texto se posiciona por encima del bloque de botones para evitar superposiciones.
+     * El texto se posiciona por encima del bloque de botones (no con offsets fijos)
+     * para evitar superposiciones cuando hay varias filas. La descripción tiene
+     * wrap automático para adaptarse al ancho de la ventana.
      *
      * Llamado en cada frame — mantener el código eficiente.
      */
@@ -136,8 +160,12 @@ public class TierSelectionScreen extends Screen {
         this.renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
 
-        String title = mode == Mode.ROL ? PrefixTagConfig.ROL_GUI_TITLE.get() : PrefixTagConfig.PVP_GUI_TITLE.get();
-        String desc  = mode == Mode.ROL ? PrefixTagConfig.ROL_GUI_DESC.get()  : PrefixTagConfig.PVP_GUI_DESC.get();
+        Component title = Component.translatable(mode == Mode.ROL
+                ? PrefixTagConfig.ROL_GUI_TITLE.get()
+                : PrefixTagConfig.PVP_GUI_TITLE.get());
+        Component desc = Component.translatable(mode == Mode.ROL
+                ? PrefixTagConfig.ROL_GUI_DESC.get()
+                : PrefixTagConfig.PVP_GUI_DESC.get());
 
         // Calcular dónde empieza el bloque de botones (misma lógica que init)
         int count  = mode == Mode.ROL ? PrefixTagConfig.getRolTierCount() : PrefixTagConfig.getPvpTierCount();
@@ -145,12 +173,11 @@ public class TierSelectionScreen extends Screen {
         int totalH = rows * BTN_H + (rows - 1) * ROW_GAP;
         int btnsStartY = this.height / 2 - totalH / 2;
 
-        // Descripción justo encima de los botones, con 8px de margen
-        int descY    = btnsStartY - 18;
-        int maxWidth = this.width - 60;
-        // Dibujar líneas de atrás hacia adelante para calcular el espacio que ocupa
-        var lines = this.font.split(Component.literal(desc), maxWidth);
-        descY -= (lines.size() - 1) * 10; // ajustar si hay varias líneas
+        // Descripción justo encima de los botones, con 18px de margen.
+        // Se sube según el número de líneas para que el bloque entero quede encima.
+        int maxWidth = this.width - 60; // 30px de margen a cada lado
+        var lines = this.font.split(desc, maxWidth);
+        int descY = btnsStartY - 18 - (lines.size() - 1) * 10;
         for (FormattedCharSequence line : lines) {
             graphics.drawString(this.font, line, (this.width - this.font.width(line)) / 2, descY, COLOR_DESC);
             descY += 10;
