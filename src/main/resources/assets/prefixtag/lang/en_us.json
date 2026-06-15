@@ -1,8 +1,8 @@
 {
-  "prefixtag.gui.rol_title": "Select your Rol rank",
-  "prefixtag.gui.rol_desc": "Choose the Rol rank you want. You can read about each rank in the designated Discord channel.",
-  "prefixtag.gui.pvp_title": "Select your PvP rank",
-  "prefixtag.gui.pvp_desc": "Choose the PvP rank you want. You can read about each rank in the designated Discord channel.",
+  "prefixtag.gui.rol_title": "Edit the Role title in the config >:D",
+  "prefixtag.gui.rol_desc": "Edit this Role description however you see fit king, queen, or monarch c:",
+  "prefixtag.gui.pvp_title": "Edit the PvP title in the config >:D",
+  "prefixtag.gui.pvp_desc": "Edit this PvP description however you see fit king, queen, or monarch c:",
 
   "prefixtag.desc.rol1": "§a● §7Edit this description in the config.",
   "prefixtag.desc.rol2": "§e● §7Edit this description in the config.",
